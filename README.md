@@ -1,9 +1,10 @@
 # ICH Preprocessing Viewer
 
 This is a graphical application built with PyQt5 and VTK for preprocessing and visualizing brain CT scans stored in NIfTI format. The tool allows users to load NIfTI files, apply windowing, segment brain tissues (including hemorrhage, skull, brain tissue, and cerebrospinal fluid), and visualize 2D slices and 3D renderings.
-(Basic)
+
+`Basic`
 ![basic](https://github.com/user-attachments/assets/bab56332-c92b-4706-9c58-b5661c7ba04d)
-(Standard)
+`Standard`
 ![standard](https://github.com/user-attachments/assets/c716a52e-fc69-46ef-961a-c0fdfd2a64e5)
 <img width="705" alt="standard2" src="https://github.com/user-attachments/assets/9f87863e-01a7-4eeb-99b1-93e528f7178b" />
 

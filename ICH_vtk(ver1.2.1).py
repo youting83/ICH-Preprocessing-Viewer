@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                              QDial, QGroupBox, QFormLayout, QProgressBar, QListWidget, QScrollArea)
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QGraphicsOpacityEffect  # Added for watermark transparency
 import vtk
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 import nibabel as nib
@@ -202,6 +203,7 @@ class VTKWidget(QWidget):
         self.text_actor.GetTextProperty().SetFontSize(24)
         self.text_actor.SetPosition(200, 200)
         self.renderer.AddActor(self.text_actor)
+        self.volume_text_actor = vtk.vtkTextActor()  # New actor for volume display
         self.vtkWidget.GetRenderWindow().Render()
 
     def create_3d_from_binary(self, binary_data, skull_data, brain_tissue_data, csf_data):
@@ -230,8 +232,29 @@ class VTKWidget(QWidget):
         outline_actor.GetProperty().SetColor(0.0, 0.0, 0.0)
         self.renderer.AddActor(outline_actor)
 
+        # Display hemorrhage volume
+        self.display_hemorrhage_volume(binary_data, depth)
+
         self.renderer.ResetCamera()
         self.vtkWidget.GetRenderWindow().Render()
+
+    def display_hemorrhage_volume(self, binary_data, depth):
+        """Calculate and display hemorrhage volume in cm³."""
+        # Count non-zero pixels (value=255) in binary_data
+        non_zero_pixels = np.sum(binary_data > 0)
+        # Total voxels = non-zero pixels * depth slices
+        voxel_count = non_zero_pixels * depth
+        # Volume in mm³ (1 voxel = 1 mm³), convert to cm³ (1 cm³ = 1000 mm³)
+        volume_cm3 = voxel_count / 1000.0
+        # Format to 2 decimal places
+        volume_text = f"Hemorrhage Volume: {volume_cm3:.2f} cm³"
+
+        # Configure text actor
+        self.volume_text_actor.SetInput(volume_text)
+        self.volume_text_actor.GetTextProperty().SetColor(0.3, 0.3, 0.3)
+        self.volume_text_actor.GetTextProperty().SetFontSize(18)
+        self.volume_text_actor.SetPosition(10, 10)  # Bottom-left corner
+        self.renderer.AddActor(self.volume_text_actor)
 
     def create_volume_data(self, data, dims, scalar_type):
         """Helper to create VTK volume data from 2D image data."""
@@ -563,6 +586,15 @@ class BrainCTViewer(QMainWindow):
         self.progress_bar.setVisible(False)
         viewer_layout.addWidget(self.progress_bar)
 
+        # Add watermark label
+        self.watermark_label = QLabel("copyright © by Huang You-Ting", main_widget)
+        self.watermark_label.setObjectName("watermark")
+        self.watermark_label.setGeometry(1450, 850, 150, 30)  # Bottom-right corner
+        opacity_effect = QGraphicsOpacityEffect()
+        opacity_effect.setOpacity(0.5)
+        self.watermark_label.setGraphicsEffect(opacity_effect)
+        self.watermark_label.raise_()
+
         self.setStyleSheet("""
             QPushButton {
                 background-color: #e0e0e0;
@@ -685,6 +717,11 @@ class BrainCTViewer(QMainWindow):
             QLabel#thumbImageLabel[selected="true"] {
                 border: 2px solid #4CAF50;
                 border-radius: 3px;
+            }
+            QLabel#watermark {
+                color: #666666;
+                font-size: 12px;
+                font-weight: bold;
             }
         """)
 
